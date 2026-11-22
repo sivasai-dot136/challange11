@@ -1,0 +1,251 @@
+#include <stdio.h>
+#define ZONES 5
+#define DAYS 7
+char *zoneName[ZONES] =
+{
+"Academic Block",
+"Hostel",
+"Library",
+"Cafeteria",
+"Sports Complex"
+};
+/* Function to input water data */
+void inputWaterData(int usage[ZONES][DAYS], int target[ZONES])
+{
+int i, j;
+for(i = 0; i < ZONES; i++)
+{
+printf("\nEnter water usage for %s\n", zoneName[i]);
+for(j = 0; j < DAYS; j++)
+{
+do
+{
+printf("Day %d: ", j + 1);
+scanf("%d", &usage[i][j]);
+if(usage[i][j] < 0 || usage[i][j] > 50000)
+{
+printf("Invalid reading!\n");
+}
+}
+while(usage[i][j] < 0 || usage[i][j] > 50000);
+}
+do
+{
+printf("Enter daily target: ");
+scanf("%d", &target[i]);
+if(target[i] < 100 || target[i] > 50000)
+{
+printf("Invalid target!\n");
+}
+}
+while(target[i] < 100 || target[i] > 50000);
+}
+}
+/* Function to display water data */
+void displayWaterData(int usage[ZONES][DAYS], int target[ZONES])
+{
+int i, j;
+printf("\n========== WATER CONSUMPTION DATA ==========\n");
+for(i = 0; i < ZONES; i++)
+{
+printf("\nZone: %s\n", zoneName[i]);
+for(j = 0; j < DAYS; j++)
+{
+printf("Day %d = %d litres\n",j + 1, usage[i][j]);
+}
+printf("Daily Target = %d litres\n", target[i]);
+}
+}
+/* Function to calculate zone statistics */
+void calculateZoneStats(int *zoneUsage, int *total,float *average, int *peakUsage,int *peakDay)
+{
+int i;
+*total = 0;
+*peakUsage = *zoneUsage;
+*peakDay = 1;
+for(i = 0; i < DAYS; i++)
+{
+*total = *total + *(zoneUsage + i);
+if(*(zoneUsage + i) > *peakUsage)
+{
+*peakUsage = *(zoneUsage + i);
+*peakDay = i + 1;
+}
+}
+*average = (float)*total / DAYS;
+}
+/* Function to detect water alerts */
+void detectWaterAlerts(int *zoneUsage, int target,int *overLimitDays, int *totalExcess,int *spikeDays, int *alertDays)
+{
+int i, over, spike;
+*overLimitDays = 0;
+*totalExcess = 0;
+*spikeDays = 0;
+*alertDays = 0;
+for(i = 0; i < DAYS; i++)
+{
+over = 0;
+spike = 0;
+if(*(zoneUsage + i) > target)
+{
+over = 1;
+(*overLimitDays)++;
+*totalExcess += *(zoneUsage + i) - target;
+}
+if(i > 0 &&
+*(zoneUsage + i) > *(zoneUsage + i - 1) * 1.40)
+{
+spike = 1;
+(*spikeDays)++;
+}
+if(over || spike)
+{
+(*alertDays)++;
+}
+}
+}
+/* Function to generate audit report */
+void generateAuditReport(int usage[ZONES][DAYS],
+int target[ZONES],
+int excess[ZONES],
+int overDays[ZONES],
+int spikes[ZONES],
+int alerts[ZONES])
+{
+int i, total, peak, peakDay;
+float average;
+printf("\n========== WATER AUDIT REPORT ==========\n");
+for(i = 0; i < ZONES; i++)
+{
+calculateZoneStats(&usage[i][0], &total,&average, &peak, &peakDay);
+detectWaterAlerts(&usage[i][0], target[i],&overDays[i], &excess[i],&spikes[i], &alerts[i]);
+printf("\nZone: %s\n", zoneName[i]);
+printf("----------------------------------------\n");
+printf("Total Usage       : %d litres\n", total);
+printf("Average Usage     : %.2f litres\n", average);
+printf("Highest Usage     : %d litres\n", peak);
+printf("Peak Day          : Day %d\n", peakDay);
+printf("Over Limit Days   : %d\n", overDays[i]);
+printf("Total Excess      : %d litres\n", excess[i]);
+printf("Spike Days        : %d\n", spikes[i]);
+printf("Alert Days        : %d\n", alerts[i]);
+}
+}
+/* Function to rank zones by excess water */
+void rankZones(int excess[ZONES])
+{
+int i, j, temp;
+int index[ZONES];
+for(i = 0; i < ZONES; i++)
+{
+index[i] = i;
+}
+for(i = 0; i < ZONES - 1; i++)
+{
+for(j = i + 1; j < ZONES; j++)
+{
+if(excess[index[i]] < excess[index[j]])
+{
+temp = index[i];
+index[i] = index[j];
+index[j] = temp;
+}
+}
+}
+printf("\n========== ZONE RANKING ==========\n");
+for(i = 0; i < ZONES; i++)
+{
+printf("%s - %d litres\n",zoneName[index[i]],excess[index[i]]);
+}
+}
+/* Function to display conservation actions */
+void displayConservationActions(int overDays[ZONES],int spikes[ZONES],int excess[ZONES])
+{
+int i;
+printf("\n========== CONSERVATION ACTIONS ==========\n");
+for(i = 0; i < ZONES; i++)
+{
+printf("\nZone: %s\n", zoneName[i]);
+if(spikes[i] > 0)
+{
+printf("Action: Check for leaks or unexpected usage.\n");
+}
+if(overDays[i] >= 3)
+{
+printf("Action: Conduct water audit and reduce usage.\n");
+}
+else if(overDays[i] == 1 || overDays[i] == 2)
+{
+printf("Action: Inspect taps and valves.\n");
+}
+if(overDays[i] == 0 && spikes[i] == 0)
+{
+printf("Action: Maintain good water-saving practices.\n");
+}
+printf("Total Excess: %d litres\n", excess[i]);
+}
+}
+/* Main function */
+int main()
+{
+int usage[ZONES][DAYS];
+int target[ZONES];
+int excess[ZONES] = {0};
+int overDays[ZONES] = {0};
+int spikes[ZONES] = {0};
+int alerts[ZONES] = {0};
+int choice;
+int report = 0;
+inputWaterData(usage, target);
+do
+{
+printf("\n========================================\n");
+printf("WATERWISE MENU\n");
+printf("========================================\n");
+printf("1. Display Water Data\n");
+printf("2. Generate Audit Report\n");
+printf("3. Rank Zones by Excess\n");
+printf("4. Conservation Actions\n");
+printf("5. Exit\n");
+printf("----------------------------------------\n");
+printf("Enter choice: ");
+scanf("%d", &choice);
+switch(choice)
+{
+case 1:
+displayWaterData(usage, target);
+break;
+case 2:
+generateAuditReport(usage, target,excess, overDays,spikes, alerts);
+report = 1;
+break;
+case 3:
+if(report == 1)
+{
+rankZones(excess);
+}
+else
+{
+printf("\nGenerate report first!\n");
+}
+break;
+case 4:
+if(report == 1)
+{
+displayConservationActions(overDays,spikes, excess);
+}
+else
+{
+printf("\nGenerate report first!\n");
+}
+break;
+case 5:
+printf("\nThank you for using WATERWISE!\n");
+break;
+default:
+printf("\nInvalid choice! Please try again.\n");
+}
+}
+while(choice != 5);
+return 0;
+}
